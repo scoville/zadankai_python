@@ -207,12 +207,13 @@ class ZadankaiCSP:
         s_assignments = self.__collect_assignments(sc)
         formatted_assignments = {}
         for c in self.rg_companies:
+            formatted_assignments[c] = {}
             for t in self.rg_terms:
                 assigned_students = []
                 for s in self.rg_students:
                     if s_assignments[(c, t, s)] == 1:
                         assigned_students.append(s)
-                formatted_assignments[(c, t)] = assigned_students
+                formatted_assignments[c][t] = assigned_students
         return formatted_assignments
 
     def __collect_assignments(self, sc):

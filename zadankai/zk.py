@@ -212,7 +212,7 @@ class ZadankaiCSP:
                 for s in self.rg_students:
                     if s_assignments[(c, t, s)] == 1:
                         assigned_students.append(s)
-                formatted_assignments[(c, t)] = assigned_students
+                formatted_assignments[c][t] = assigned_students
         return formatted_assignments
 
     def __collect_assignments(self, sc):

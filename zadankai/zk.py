@@ -207,6 +207,7 @@ class ZadankaiCSP:
         s_assignments = self.__collect_assignments(sc)
         formatted_assignments = {}
         for c in self.rg_companies:
+            formatted_assignments[c] = {}
             for t in self.rg_terms:
                 assigned_students = []
                 for s in self.rg_students:

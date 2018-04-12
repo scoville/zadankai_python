@@ -43,8 +43,8 @@ class ZadankaiCSP:
         self.combined_ratings = {}
         for company in self.rg_companies:
             for student in self.rg_students:
-                c_rating = int((company_ratings['values'][company][student] / 4) * 100)
-                s_rating = int((student_ratings['values'][student][company] / 4) * 100)
+                c_rating = int((company_ratings['values'][company][student] / 5) * 100)
+                s_rating = int((student_ratings['values'][student][company] / 5) * 100)
                 combined = company_ratings['weight'] * c_rating + student_ratings['weight'] * s_rating
                 combined /= company_ratings['weight'] + student_ratings['weight']
                 self.combined_ratings[(company, student)] = int(combined)
@@ -103,7 +103,7 @@ class ZadankaiCSP:
         for c in self.rg_companies:
             for t in self.rg_terms:
                 for s in self.rg_students:
-                    dissatisfaction = self.assignments[(c, t, s)] * (1 - self.combined_ratings[(c, s)])
+                    dissatisfaction = self.assignments[(c, t, s)] * (100 - self.combined_ratings[(c, s)])
                     self.assigned_dissatisfaction[(c, t, s)] = dissatisfaction
 
         self.ttl_dissatisfaction = self.csp.Sum([

@@ -103,7 +103,7 @@ class ZadankaiCSP:
         for c in self.rg_companies:
             for t in self.rg_terms:
                 for s in self.rg_students:
-                    dissatisfaction = self.assignments[(c, t, s)] * (1 - self.combined_ratings[(c, s)])
+                    dissatisfaction = self.assignments[(c, t, s)] * (100 - self.combined_ratings[(c, s)])
                     self.assigned_dissatisfaction[(c, t, s)] = dissatisfaction
 
         self.ttl_dissatisfaction = self.csp.Sum([

@@ -43,8 +43,8 @@ class ZadankaiCSP:
         self.combined_ratings = {}
         for company in self.rg_companies:
             for student in self.rg_students:
-                c_rating = int((company_ratings['values'][company][student] / 5) * 100)
-                s_rating = int((student_ratings['values'][student][company] / 5) * 100)
+                c_rating = int((company_ratings['values'][company][student] / 4) * 100)
+                s_rating = int((student_ratings['values'][student][company] / 4) * 100)
                 combined = company_ratings['weight'] * c_rating + student_ratings['weight'] * s_rating
                 combined /= company_ratings['weight'] + student_ratings['weight']
                 self.combined_ratings[(company, student)] = int(combined)

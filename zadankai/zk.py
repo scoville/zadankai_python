@@ -9,6 +9,7 @@ class ZadankaiCSP:
 
     def __init__(self, companies, students, terms):
         self.csp = pywrapcp.Solver("zadankai")
+        self.solution_collector = None
 
         self.__process_data(companies, students, terms)
 
@@ -149,6 +150,11 @@ class ZadankaiCSP:
                     self.num_groups_per_company[company]
                 ))
 
+        # Each Company has at most 10 Student per Term
+        for company in self.rg_companies:
+            for term in self.rg_terms:
+                self.csp.Add(self.headcounts[(company, term)] <= 10)
+
     def __make_symmetry_breaking_constraints(self):
         # TODO
         pass
@@ -187,24 +193,24 @@ class ZadankaiCSP:
         return collector
 
     def solve(self, weights, next_var=__DEFAULT_NEXT_VAR, next_value=__DEFAULT_NEXT_VALUE, max_timeout=60):
-        solution_collector = self.__make_solution_collector()
+        self.solution_collector = self.__make_solution_collector()
         solved = self.csp.Solve(
             self.csp.Phase(self.assignments_flat, next_var, next_value),
             [
-                solution_collector,
+                self.solution_collector,
                 self.__make_objective_function(weights),
                 self.csp.TimeLimit(max_timeout * 1000),
             ]
         )
         if solved:
-            s_assignments = self.__format_assignments(solution_collector)
+            s_assignments = self.__format_assignments()
             self.csp.EndSearch()
             return s_assignments
         else:
             return None
 
-    def __format_assignments(self, sc):
-        s_assignments = self.__collect_assignments(sc)
+    def __format_assignments(self):
+        s_assignments = self.__collect_assignments()
         formatted_assignments = {}
         for c in self.rg_companies:
             formatted_assignments[c] = {}
@@ -216,10 +222,82 @@ class ZadankaiCSP:
                 formatted_assignments[c][t] = assigned_students
         return formatted_assignments
 
-    def __collect_assignments(self, sc):
+    def __collect_assignments(self):
         s_assignments = {}
         for c in self.rg_companies:
             for t in self.rg_terms:
                 for s in self.rg_students:
-                    s_assignments[(c, t, s)] = sc.Value(0, self.assignments[(c, t, s)])
+                    s_assignments[(c, t, s)] = self.solution_collector.Value(0, self.assignments[(c, t, s)])
         return s_assignments
+
+    def __collect_headcounts(self):
+        s_headcounts = {}
+        for c in self.rg_companies:
+            for t in self.rg_terms:
+                s_headcounts[(c, t)] = self.solution_collector.Value(0, self.headcounts[(c, t)])
+        return s_headcounts
+
+    def __print_assignments(self):
+        s_assignments = self.__collect_assignments()
+        s_headcounts = self.__collect_headcounts()
+
+        largest_group_or_target_per_term = [
+            max([max(s_headcounts[(c, t)], self.target_assignments[c]) for c in self.rg_companies])
+            for t in self.rg_terms
+        ]
+
+        cell_content_length = 4
+        cell_padding = 1
+        cell_length = cell_content_length + cell_padding
+        cell_format = f"{{:^{cell_content_length}}}"
+        separator = "|"
+        separator_padding = 1
+        separator_length = len(separator) + separator_padding
+        label_length = cell_length + separator_length
+        term_lengths = [cell_length * largest_group_or_target_per_term[t] + separator_length for t in self.rg_terms]
+        term_formats = [f"{{:^{term_lengths[t] - separator_length}}}" for t in self.rg_terms]
+        row_length = label_length + sum(term_lengths) - 1
+
+        print("", end=" " * (label_length - separator_length))
+        print(separator, end=" " * separator_padding)
+        for t in self.rg_terms:
+            print(term_formats[t].format(f"t{t}"), end="")
+            print(separator, end=" " * separator_padding)
+        print()
+
+        print("", end=" " * (label_length - separator_length))
+        print(separator, end=" " * separator_padding)
+        for t in self.rg_terms:
+            for sl in range(largest_group_or_target_per_term[t]):
+                print(cell_format.format(f"sl{sl}"), end=" " * cell_padding)
+            print(separator, end=" " * separator_padding)
+        print()
+
+        for c in self.rg_companies:
+            print("-" * row_length)
+            print(cell_format.format(f"c{c}"), end=" " * cell_padding)
+            print(separator, end=" " * separator_padding)
+            target_assignments = self.target_assignments[c]
+            for t in self.rg_terms:
+                assigned_students = []
+                for s in self.rg_students:
+                    if s_assignments[(c, t, s)] == 1:
+                        assigned_students.append(s)
+                num_assigned_students = len(assigned_students)
+                student_index = 0
+                for sl in range(largest_group_or_target_per_term[t]):
+                    printed = assigned_students[student_index] if student_index < num_assigned_students else " "
+                    student_index += 1
+                    if sl == target_assignments - 1:
+                        printed = f"[{printed}]"
+                    print(cell_format.format(printed), end=" " * cell_padding)
+                print(separator, end=" " * separator_padding)
+            print()
+        print("-" * row_length)
+        print()
+
+    def print_solution(self):
+        if self.solution_collector is not None:
+            self.__print_assignments()
+        else:
+            print('No solutions yet')

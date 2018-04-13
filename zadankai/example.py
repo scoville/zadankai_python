@@ -5,7 +5,7 @@ from zadankai.zk_wrap import run
 json = {
     'companies': {
         'count': 4,
-        'groups': [1, 1, 1, 1],
+        'groups': [1, 2, 1, 2],
         'ratings': {
             'values': [
                 [1, 3, 2, 4, 4, 0],
